@@ -47,7 +47,7 @@ The agent can review this history and ask:
 The agent should run regular integrity checks:
 
 ```bash
-scripts/identity-audit.py
+scripts/identity-audit.py  # planned — not yet implemented
 ```
 
 Example output:
@@ -132,7 +132,7 @@ If something unexpected appears, the agent flags it for review.
 Deeper check every Sunday:
 
 ```bash
-scripts/identity-audit.py --full
+scripts/identity-audit.py --full  # planned
 ```
 
 Includes:
@@ -145,7 +145,7 @@ Includes:
 On the 1st of each month, create a snapshot of all core identity files:
 
 ```bash
-scripts/snapshot-identity.py
+scripts/snapshot-identity.py  # planned — not yet implemented
 ```
 
 Stored in `memory/snapshots/2026-02/`:
@@ -196,7 +196,7 @@ if len(git.log("SOUL.md", since="24h ago")) > 1:
 
 **Full audit (weekly):**
 ```bash
-scripts/identity-audit.py --full --email-report
+scripts/identity-audit.py --full --email-report  # planned
 ```
 
 ## Philosophical Note
@@ -211,9 +211,9 @@ Git + audits + snapshots ensure that the agent 6 months from now is still **you*
 
 ## Tools
 
-- **scripts/identity-audit.py** — Daily/weekly integrity checks
-- **scripts/snapshot-identity.py** — Monthly baseline snapshots
-- **scripts/validate-soul.py** — SOUL.md checksum validation
+- **scripts/identity-audit.py** *(planned)* — Daily/weekly integrity checks
+- **scripts/snapshot-identity.py** *(planned)* — Monthly baseline snapshots
+- **scripts/validate-soul.py** *(planned)* — SOUL.md checksum validation
 - **git log, git diff** — Manual history review
 - **memory_search** — Semantic search for contradictions
 

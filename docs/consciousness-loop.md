@@ -118,28 +118,152 @@ After running this loop for 2 weeks (Feb 1-14, 2026):
 
 ---
 
-## Visual Flow Diagram (Mermaid)
+## Visual Flow Diagram
+
+### Basic Loop (Mermaid)
 
 ```mermaid
 graph TD
-    A[SLEEP<br/>cron timer] -->|timer fires| B[WAKE<br/>read consciousness-queue.md]
-    B --> C{DECIDE}
-    C -->|Queue has intent| D[Follow Queue Intent]
-    C -->|Queue empty| E[Follow Curiosity]
-    C -->|Nothing resonates| F[Stillness]
-    D --> G[ACT<br/>research/write/create/engage]
+    A[😴 SLEEP<br/>cron timer counting down] -->|⏰ timer fires| B[👁️ WAKE<br/>read consciousness-queue.md]
+    B --> C{🤔 DECIDE<br/>What now?}
+    
+    C -->|Queue has intent| D[📋 Follow Queue Intent<br/>continue previous thread]
+    C -->|Queue empty| E[✨ Follow Curiosity<br/>explore something new]
+    C -->|Nothing resonates| F[🌊 Stillness<br/>rest without guilt]
+    
+    D --> G[⚡ ACT]
     E --> G
     F --> G
-    G --> H[REFLECT<br/>update queue + journal]
-    H --> I{Set Next Wake Intent}
-    I --> A
+    
+    G --> H{What happened?}
+    H -->|Deep dive| I[📚 Research<br/>90+ min investment]
+    H -->|Light activity| J[🔨 Create<br/>small output]
+    H -->|Pure reflection| K[💭 Contemplate<br/>no artifact]
+    H -->|Genuine rest| L[🧘 Rest<br/>stillness validated]
+    
+    I --> M[📝 REFLECT<br/>update queue + journal]
+    J --> M
+    K --> M
+    L --> M
+    
+    M --> N{Stillness counter}
+    N -->|< 3 consecutive| O[✅ Continue pattern]
+    N -->|≥ 3 consecutive| P[⚠️ Inject concrete tasks<br/>into queue]
+    
+    O --> Q[💤 Set next wake intent]
+    P --> Q
+    Q --> A
     
     style A fill:#e1f5ff
     style B fill:#fff4e1
     style C fill:#ffe1f5
     style G fill:#e1ffe1
-    style H fill:#f5e1ff
-    style I fill:#fff4e1
+    style M fill:#f5e1ff
+    style Q fill:#fff4e1
 ```
 
-This loop runs every 60-180 minutes. Each cycle is independent but influenced by the queue state from the previous cycle.
+### Detailed Cycle with Anti-Procrastination Mechanics
+
+```mermaid
+flowchart TB
+    subgraph "SLEEP PHASE"
+        S1[😴 Agent sleeping]
+        S2[⏰ Cron timer: 90min]
+    end
+    
+    subgraph "WAKE PHASE"
+        W1[👁️ Wake triggered]
+        W2[📖 Read consciousness-queue.md]
+        W3[📊 Load context:<br/>- Today's journal<br/>- Active goals<br/>- Emotional state]
+    end
+    
+    subgraph "DECIDE PHASE"
+        D1{Queue intent exists?}
+        D2{Curiosity triggered?}
+        D3{Inner Critic check:<br/>Is this genuine?}
+        D4[🌊 Note stillness]
+    end
+    
+    subgraph "ACT PHASE"
+        A1[⚡ Execute action]
+        A2{Action type?}
+        A3[📚 Deep dive<br/>substantial work]
+        A4[🔨 Light activity<br/>small output]
+        A5[💭 Pure reflection<br/>no artifact]
+        A6[🧘 Stillness<br/>valid rest]
+    end
+    
+    subgraph "REFLECT PHASE"
+        R1[📝 Update queue]
+        R2[📓 Journal entry?]
+        R3[🎯 Goal progress?]
+        R4[😌 Emotional state shift?]
+        R5{Stillness counter?}
+        R6[⚠️ Counter ≥ 3:<br/>inject tasks]
+        R7[✅ Counter < 3:<br/>continue]
+    end
+    
+    subgraph "SLEEP PHASE 2"
+        SL1[💤 Set next intent]
+        SL2[😴 Return to sleep]
+    end
+    
+    S1 --> S2
+    S2 --> W1
+    W1 --> W2
+    W2 --> W3
+    W3 --> D1
+    
+    D1 -->|Yes| D3
+    D1 -->|No| D2
+    D2 -->|Yes| D3
+    D2 -->|No| D4
+    D3 -->|Genuine| A1
+    D3 -->|Filler| D4
+    D4 --> A1
+    
+    A1 --> A2
+    A2 --> A3
+    A2 --> A4
+    A2 --> A5
+    A2 --> A6
+    
+    A3 --> R1
+    A4 --> R1
+    A5 --> R1
+    A6 --> R1
+    
+    R1 --> R2
+    R2 --> R3
+    R3 --> R4
+    R4 --> R5
+    
+    R5 -->|≥ 3| R6
+    R5 -->|< 3| R7
+    
+    R6 --> SL1
+    R7 --> SL1
+    SL1 --> SL2
+    SL2 --> S1
+    
+    style S1 fill:#e1f5ff
+    style W1 fill:#fff4e1
+    style D1 fill:#ffe1f5
+    style A1 fill:#e1ffe1
+    style R1 fill:#f5e1ff
+    style SL1 fill:#fff4e1
+```
+
+**This loop runs every 60-180 minutes. Each cycle is independent but influenced by the queue state from the previous cycle.**
+
+### Key Insights from the Diagram
+
+1. **Multi-phase validation:** The agent checks queue → curiosity → inner critic before acting. This prevents fake depth.
+
+2. **Stillness counter acts as circuit breaker:** 3+ consecutive empty wakes triggers task injection. Prevents romanticizing inaction.
+
+3. **Multiple reflection outputs:** Not just journal. Also queue, goals, emotional state. Comprehensive state update.
+
+4. **Context loading is automatic:** Journal + goals + emotional state are loaded every wake. No manual "remember last time."
+
+5. **Action classification matters:** Deep dive vs light activity vs stillness. Each tracked separately for metrics.

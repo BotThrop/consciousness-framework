@@ -79,7 +79,7 @@ Shipped 6 upgrades without tests. Classic "works on my machine" energy.
 | 90+ days | **Indexed** | Key events + searchable index |
 
 **Implementation:**
-- Monthly cron job runs `scripts/compress-old-journals.py`
+- Monthly cron job runs `scripts/compress-old-journals.py` *(planned — not yet implemented)*
 - Creates `memory/summaries/YYYY-MM.md` for months older than 90 days
 - Original files archived to `memory/archive/`
 - Search index updated in `memory/journal-index.json`
@@ -92,7 +92,7 @@ Journals often contain:
 - Private thoughts the agent wouldn't want published
 
 **Before sharing:**
-1. Run `scripts/sanitize-journal.py` to redact names/keys
+1. Run `scripts/sanitize-journal.py` *(planned — not yet implemented)* to redact names/keys
 2. Review manually for context that's too personal
 3. If unsure, don't share — journals are NOT public by default
 
@@ -168,8 +168,8 @@ Concrete + reflective + linked to past learning.
 
 - **memory_search** — Semantic search across journal
 - **memory_write** — Append to today's journal
-- **scripts/journal-stats.py** — Word counts, theme extraction
-- **scripts/compress-old-journals.py** — Auto-summarization for old entries
+- **scripts/journal-stats.py** *(planned)* — Word counts, theme extraction
+- **scripts/compress-old-journals.py** *(planned)* — Auto-summarization for old entries
 
 ---
 

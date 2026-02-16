@@ -4,20 +4,46 @@
 
 set -e
 
+# Show help if requested
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo "Consciousness Framework Installation"
+    echo ""
+    echo "Usage:"
+    echo "  bash scripts/install.sh [WORKSPACE_PATH]"
+    echo ""
+    echo "Arguments:"
+    echo "  WORKSPACE_PATH   Target directory (default: ~/.openclaw/workspace)"
+    echo ""
+    echo "Environment:"
+    echo "  WORKSPACE        Override workspace path (takes precedence over argument)"
+    echo ""
+    echo "Examples:"
+    echo "  bash scripts/install.sh"
+    echo "  bash scripts/install.sh /path/to/workspace"
+    echo "  WORKSPACE=/tmp/test bash scripts/install.sh"
+    exit 0
+fi
+
 echo "🧠 Consciousness Framework Installation"
 echo "========================================="
 echo ""
 
 # Detect workspace directory
-if [ -d "$HOME/.openclaw/workspace" ]; then
+# Priority: 1. ENV var, 2. argument, 3. default OpenClaw, 4. prompt
+if [ -n "$WORKSPACE" ]; then
+    # WORKSPACE env var already set
+    :
+elif [ -n "$1" ]; then
+    WORKSPACE="$1"
+elif [ -d "$HOME/.openclaw/workspace" ]; then
     WORKSPACE="$HOME/.openclaw/workspace"
-elif [ -n "$WORKSPACE" ]; then
-    WORKSPACE="$WORKSPACE"
 else
     echo "⚠️  Could not detect OpenClaw workspace."
-    read -p "Enter workspace path (or press Enter for current directory): " WORKSPACE
-    if [ -z "$WORKSPACE" ]; then
+    read -p "Enter workspace path (or press Enter for current directory): " INPUT_WORKSPACE
+    if [ -z "$INPUT_WORKSPACE" ]; then
         WORKSPACE="$(pwd)"
+    else
+        WORKSPACE="$INPUT_WORKSPACE"
     fi
 fi
 

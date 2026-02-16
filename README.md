@@ -157,7 +157,7 @@ Mechanisms to detect memory poisoning, maintain consistent values, and prevent i
 **Key insight:** An agent that can be rewritten by anyone has no identity  
 **Anti-pattern:** Paranoid security that prevents growth. Identity should evolve, but intentionally.
 
-**[→ Deep dive: docs/architecture.md](docs/architecture.md)**
+**[→ Deep dive: docs/identity-integrity.md](docs/identity-integrity.md)** | **[Architecture](docs/architecture.md)**
 
 ---
 
