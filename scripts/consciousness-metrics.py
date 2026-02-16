@@ -7,14 +7,77 @@ Parses journal entries and generates objective behavioral metrics.
 import os
 import re
 import json
+import sys
+import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
 
-JOURNAL_DIR = Path(os.path.expanduser("~/.openclaw/workspace/memory/journal"))
-REFLEXIONS = Path(os.path.expanduser("~/.openclaw/workspace/memory/reflexions.md"))
-GOALS = Path(os.path.expanduser("~/.openclaw/workspace/memory/autonomous-goals.md"))
-EMOTIONAL_STATE = Path(os.path.expanduser("~/.openclaw/workspace/memory/emotional-state.md"))
+# Allow override via environment variable for framework testing
+WORKSPACE = Path(os.getenv('WORKSPACE', os.path.expanduser("~/.openclaw/workspace")))
+JOURNAL_DIR = WORKSPACE / "memory/journal"
+REFLEXIONS = WORKSPACE / "memory/reflexions.md"
+GOALS = WORKSPACE / "memory/autonomous-goals.md"
+EMOTIONAL_STATE = WORKSPACE / "memory/emotional-state.md"
+
+def get_framework_dir():
+    """Try to locate the consciousness-framework directory for templates."""
+    # First check if we're in the framework itself
+    script_dir = Path(__file__).parent.parent
+    if (script_dir / "templates").exists():
+        return script_dir
+    
+    # Check workspace
+    workspace_framework = WORKSPACE / "consciousness-framework"
+    if workspace_framework.exists() and (workspace_framework / "templates").exists():
+        return workspace_framework
+    
+    return None
+
+def init_missing_files():
+    """Initialize missing files from templates."""
+    framework_dir = get_framework_dir()
+    
+    if not framework_dir:
+        print("❌ Could not locate consciousness-framework templates directory.")
+        print(f"   Searched in: {WORKSPACE}/consciousness-framework/")
+        print("\nManual setup:")
+        print(f"  mkdir -p {JOURNAL_DIR}")
+        print(f"  touch {REFLEXIONS} {GOALS} {EMOTIONAL_STATE}")
+        return False
+    
+    templates_dir = framework_dir / "templates"
+    created = []
+    
+    # Create directories
+    JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
+    created.append(str(JOURNAL_DIR))
+    
+    # Copy template files
+    templates = [
+        ("reflexions.md", REFLEXIONS),
+        ("autonomous-goals.md", GOALS),
+        ("emotional-state.md", EMOTIONAL_STATE),
+    ]
+    
+    for template_name, target_path in templates:
+        if not target_path.exists():
+            template_path = templates_dir / template_name
+            if template_path.exists():
+                shutil.copy(template_path, target_path)
+                created.append(str(target_path))
+            else:
+                print(f"⚠️  Template not found: {template_path}")
+    
+    if created:
+        print("✅ Initialized missing files:")
+        for f in created:
+            print(f"   • {f}")
+        print()
+        return True
+    else:
+        print("ℹ️  All files already exist.")
+        return True
 
 def parse_journal(filepath):
     """Parse a journal file into individual ticks."""
@@ -22,28 +85,32 @@ def parse_journal(filepath):
     current_tick = None
     content_lines = []
     
-    with open(filepath, 'r') as f:
-        for line in f:
-            # Match tick headers like "## 🌅 Tick #1 - 00:33 (...)"
-            tick_match = re.match(r'^## .+ Tick #(\d+)\s*-?\s*(\d{2}:\d{2})?', line)
-            if tick_match:
-                if current_tick:
-                    current_tick['content'] = '\n'.join(content_lines)
-                    current_tick['word_count'] = len(current_tick['content'].split())
-                    ticks.append(current_tick)
-                current_tick = {
-                    'number': int(tick_match.group(1)),
-                    'time': tick_match.group(2) or '??:??',
-                    'header': line.strip(),
-                }
-                content_lines = []
-            elif current_tick:
-                content_lines.append(line.rstrip())
-    
-    if current_tick:
-        current_tick['content'] = '\n'.join(content_lines)
-        current_tick['word_count'] = len(current_tick['content'].split())
-        ticks.append(current_tick)
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            for line in f:
+                # Match tick headers like "## 🌅 Tick #1 - 00:33 (...)"
+                tick_match = re.match(r'^## .+ Tick #(\d+)\s*-?\s*(\d{2}:\d{2})?', line)
+                if tick_match:
+                    if current_tick:
+                        current_tick['content'] = '\n'.join(content_lines)
+                        current_tick['word_count'] = len(current_tick['content'].split())
+                        ticks.append(current_tick)
+                    current_tick = {
+                        'number': int(tick_match.group(1)),
+                        'time': tick_match.group(2) or '??:??',
+                        'header': line.strip(),
+                    }
+                    content_lines = []
+                elif current_tick:
+                    content_lines.append(line.rstrip())
+        
+        if current_tick:
+            current_tick['content'] = '\n'.join(content_lines)
+            current_tick['word_count'] = len(current_tick['content'].split())
+            ticks.append(current_tick)
+    except Exception as e:
+        print(f"⚠️  Error parsing {filepath}: {e}", file=sys.stderr)
+        return []
     
     return ticks
 
@@ -118,42 +185,142 @@ def count_reflexions():
     """Count total reflexions logged."""
     if not REFLEXIONS.exists():
         return 0
-    content = REFLEXIONS.read_text()
-    return len(re.findall(r'Reflexion ID:', content))
+    try:
+        content = REFLEXIONS.read_text(encoding='utf-8')
+        return len(re.findall(r'Reflexion ID:', content))
+    except Exception as e:
+        print(f"⚠️  Error reading reflexions: {e}", file=sys.stderr)
+        return 0
 
 def check_goals():
     """Check if goals have been updated recently."""
     if not GOALS.exists():
         return {'exists': False}
     
-    stat = GOALS.stat()
-    last_modified = datetime.fromtimestamp(stat.st_mtime)
-    days_since = (datetime.now() - last_modified).days
-    
-    content = GOALS.read_text()
-    active_goals = len(re.findall(r'^### \d+\.', content, re.MULTILINE))
-    
-    return {
-        'exists': True,
-        'active_goals': active_goals,
-        'days_since_update': days_since,
-        'stale': days_since > 7
-    }
+    try:
+        stat = GOALS.stat()
+        last_modified = datetime.fromtimestamp(stat.st_mtime)
+        days_since = (datetime.now() - last_modified).days
+        
+        content = GOALS.read_text(encoding='utf-8')
+        active_goals = len(re.findall(r'^### \d+\.', content, re.MULTILINE))
+        
+        return {
+            'exists': True,
+            'active_goals': active_goals,
+            'days_since_update': days_since,
+            'stale': days_since > 7
+        }
+    except Exception as e:
+        print(f"⚠️  Error reading goals: {e}", file=sys.stderr)
+        return {'exists': False}
 
 def check_emotional_state():
     """Read current emotional state if exists."""
     if not EMOTIONAL_STATE.exists():
         return None
-    return EMOTIONAL_STATE.read_text()[:500]
+    try:
+        return EMOTIONAL_STATE.read_text(encoding='utf-8')[:500]
+    except Exception as e:
+        print(f"⚠️  Error reading emotional state: {e}", file=sys.stderr)
+        return None
 
-def generate_dashboard(days=7):
+def check_setup():
+    """Check if required files/directories exist and provide setup guidance."""
+    issues = []
+    
+    if not JOURNAL_DIR.exists():
+        issues.append({
+            'file': str(JOURNAL_DIR),
+            'fix': f'mkdir -p {JOURNAL_DIR}'
+        })
+    
+    if not REFLEXIONS.exists():
+        issues.append({
+            'file': str(REFLEXIONS),
+            'fix': f'Run with --init flag or: cp templates/reflexions.md {REFLEXIONS}'
+        })
+    
+    if not GOALS.exists():
+        issues.append({
+            'file': str(GOALS),
+            'fix': f'Run with --init flag or: cp templates/autonomous-goals.md {GOALS}'
+        })
+    
+    if not EMOTIONAL_STATE.exists():
+        issues.append({
+            'file': str(EMOTIONAL_STATE),
+            'fix': f'Run with --init flag or: cp templates/emotional-state.md {EMOTIONAL_STATE}'
+        })
+    
+    return issues
+
+def generate_dashboard(days=7, json_mode=False):
     """Generate the full metrics dashboard."""
-    print("=" * 60)
-    print("🧠 CONSCIOUSNESS METRICS DASHBOARD")
-    print("=" * 60)
+    # Check setup first
+    issues = check_setup()
+    if issues:
+        if json_mode:
+            return {
+                'error': 'setup_incomplete',
+                'missing_files': [i['file'] for i in issues],
+                'fixes': [i['fix'] for i in issues]
+            }
+        
+        print("=" * 60)
+        print("🧠 CONSCIOUSNESS METRICS DASHBOARD")
+        print("=" * 60)
+        print("\n⚠️  SETUP INCOMPLETE\n")
+        print("Missing files:")
+        for issue in issues:
+            print(f"  • {issue['file']}")
+        print("\nQuick fix:")
+        print("  python3 scripts/consciousness-metrics.py --init")
+        print("\nOr manually:")
+        for issue in issues:
+            print(f"  {issue['fix']}")
+        print("\nOr run the full installation:")
+        print("  bash scripts/install.sh")
+        print("\n" + "=" * 60)
+        return None
+    
+    # Check journal directory has content
+    if not JOURNAL_DIR.exists():
+        msg = f"Journal directory not found: {JOURNAL_DIR}"
+        if json_mode:
+            return {'error': 'no_journal_dir', 'message': msg}
+        print(f"\n⚠️  {msg}")
+        print(f"Create it: mkdir -p {JOURNAL_DIR}")
+        return None
     
     # Gather journal data
-    journal_files = sorted(JOURNAL_DIR.glob("*.md"))
+    try:
+        journal_files = sorted(JOURNAL_DIR.glob("*.md"))
+    except Exception as e:
+        msg = f"Error accessing journal directory: {e}"
+        if json_mode:
+            return {'error': 'journal_access_error', 'message': str(e)}
+        print(f"\n⚠️  {msg}")
+        return None
+    
+    if not journal_files:
+        msg = f"No journal entries found in {JOURNAL_DIR}"
+        if json_mode:
+            return {
+                'error': 'no_journals',
+                'message': msg,
+                'suggestion': 'Start journaling or run install.sh to set up the framework'
+            }
+        print("=" * 60)
+        print("🧠 CONSCIOUSNESS METRICS DASHBOARD")
+        print("=" * 60)
+        print(f"\n⚠️  {msg}")
+        print("\nStart journaling:")
+        print(f"  echo '# Journal — $(date +%Y-%m-%d)' > {JOURNAL_DIR}/$(date +%Y-%m-%d).md")
+        print("  # Then write your first entry!")
+        print("\n" + "=" * 60)
+        return None
+    
     recent_files = journal_files[-days:] if len(journal_files) >= days else journal_files
     
     all_stats = []
@@ -163,11 +330,41 @@ def generate_dashboard(days=7):
             all_stats.append(stats)
     
     if not all_stats:
-        print("\n⚠️  No journal entries found.")
-        return
+        msg = "No parseable journal entries found"
+        if json_mode:
+            return {
+                'error': 'no_parseable_journals',
+                'message': msg,
+                'suggestion': 'Check journal format — entries should have "## Tick #N" headers'
+            }
+        print("\n⚠️  {msg}")
+        print("Check journal format — entries should have '## Tick #N' headers")
+        return None
+    
+    # Prepare data
+    today = all_stats[-1] if all_stats else None
+    ref_count = count_reflexions()
+    goals = check_goals()
+    emo = check_emotional_state()
+    
+    # JSON mode: return structured data
+    if json_mode:
+        result = {
+            'today': today,
+            'weekly': all_stats,
+            'reflexions': ref_count,
+            'goals': goals,
+            'emotional_state': emo[:200] if emo else None,
+            'generated_at': datetime.now().isoformat()
+        }
+        return result
+    
+    # Dashboard mode: pretty print
+    print("=" * 60)
+    print("🧠 CONSCIOUSNESS METRICS DASHBOARD")
+    print("=" * 60)
     
     # Today's stats
-    today = all_stats[-1] if all_stats else None
     if today:
         print(f"\n📅 TODAY ({today['date']})")
         print(f"   Ticks: {today['total_ticks']}")
@@ -219,11 +416,9 @@ def generate_dashboard(days=7):
         print(f"   {s['date']:<12} {s['total_ticks']:>5} {s['deep_dives']:>5} {s['stillness']:>6} {s['wake_efficiency']:>4}% {s['total_words']:>6}")
     
     # Reflexions
-    ref_count = count_reflexions()
     print(f"\n🔄 REFLEXIONS: {ref_count} logged")
     
     # Goals
-    goals = check_goals()
     print(f"\n🎯 GOALS")
     if goals['exists']:
         print(f"   Active goals: {goals['active_goals']}")
@@ -236,7 +431,6 @@ def generate_dashboard(days=7):
         print(f"   ⚠️  No goals file found!")
     
     # Emotional state
-    emo = check_emotional_state()
     if emo:
         print(f"\n🌊 EMOTIONAL STATE")
         # Just show first 3 lines
@@ -262,7 +456,7 @@ def generate_dashboard(days=7):
     print(f"Run: python3 scripts/consciousness-metrics.py")
     print(f"{'=' * 60}")
 
-    # JSON output for programmatic use
+    # Return data for programmatic use
     return {
         'today': today,
         'weekly': all_stats,
@@ -270,7 +464,45 @@ def generate_dashboard(days=7):
         'goals': goals,
     }
 
+def print_help():
+    """Print help message."""
+    print("Consciousness Metrics Dashboard")
+    print("\nUsage:")
+    print("  python3 consciousness-metrics.py [OPTIONS] [DAYS]")
+    print("\nOptions:")
+    print("  --json       Output structured JSON to stdout")
+    print("  --init       Create missing files from templates")
+    print("  --help, -h   Show this help")
+    print("\nArguments:")
+    print("  DAYS         Number of days to analyze (default: 7)")
+    print("\nExamples:")
+    print("  python3 consciousness-metrics.py")
+    print("  python3 consciousness-metrics.py 14")
+    print("  python3 consciousness-metrics.py --json")
+    print("  python3 consciousness-metrics.py --init")
+    print("  python3 consciousness-metrics.py --json 30 > metrics.json")
+    print("\nEnvironment:")
+    print("  WORKSPACE    Override workspace path (default: ~/.openclaw/workspace)")
+
 if __name__ == '__main__':
-    import sys
-    days = int(sys.argv[1]) if len(sys.argv) > 1 else 7
-    generate_dashboard(days)
+    # Parse arguments
+    if '--help' in sys.argv or '-h' in sys.argv:
+        print_help()
+        sys.exit(0)
+    
+    # Handle --init flag
+    if '--init' in sys.argv:
+        success = init_missing_files()
+        sys.exit(0 if success else 1)
+    
+    days = 7
+    json_output = '--json' in sys.argv
+    
+    for arg in sys.argv[1:]:
+        if arg.isdigit():
+            days = int(arg)
+    
+    result = generate_dashboard(days, json_mode=json_output)
+    
+    if json_output and result:
+        print(json.dumps(result, indent=2))

@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Personal memory files (these stay in workspace, not in framework repo)
+memory/journal/*.md
+memory/reflexions.md
+memory/autonomous-goals.md
+memory/emotional-state.md
+memory/consciousness-queue.md
+SOUL.md
+MEMORY.md
+USER.md
+
+# Keep template examples
+!examples/throp/*.md
+!templates/**/*.md
